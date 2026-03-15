@@ -1,107 +1,82 @@
-# Serial Controller Launcher
+# Figma Serial Controller — Setup Guide
 
-Есть несколько способов запуска агента:
+## 📋 Что нужно
 
-## 1. 📁 Двойной клик (самый простой)
-
-**Файл:** `start_agent.command`
-
-Просто дважды кликните на этот файл - откроется Terminal и запустится агент.
-
-Можно перетащить этот файл на рабочий стол или в Dock для быстрого доступа.
+- macOS 12+
+- Arduino Micro подключён по USB
+- Figma Desktop
 
 ---
 
-## 2. 🍎 AppleScript приложение
+## 🚀 Быстрый старт (новый компьютер, без Python)
 
-**Файл:** `Start Serial Controller.scpt`
+### Шаг 1: Запустите агент
 
-1. Откройте файл в **Script Editor** (Редактор сценариев)
-2. Меню **File → Export...**
-3. File Format: **Application**
-4. Сохраните как `Serial Controller.app` где удобно
-5. Теперь можно запускать как обычное приложение
+Откройте **Figma Serial Agent.app**
 
-Можно добавить свою иконку:
-- Найдите нужную картинку
-- Get Info (⌘I) на картинке → копируйте превью
-- Get Info на .app → вставьте в иконку вверху
+> ⚠️ **Первый запуск:** macOS покажет предупреждение.
+> Нажмите **правой кнопкой** → **Открыть** → **Открыть**.
+> Нужно сделать только один раз — macOS запомнит.
+
+Агент запустится и будет слушать контроллер через USB.
+
+### Шаг 2: Установите плагин в Figma
+
+1. Откройте **Figma Desktop**
+2. Откройте любой файл
+3. **Plugins → Development → Import plugin from manifest…**
+4. Выберите `plugin/manifest.json` из папки проекта
+5. Плагин появится в **Plugins → Development**
+
+### Шаг 3: Запустите плагин
+
+1. В Figma: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
+2. Окно плагина подключится к агенту
+3. Готово! Крутите энкодеры, нажимайте кнопки 🎛
+
+> Плагин устанавливается **один раз** и сохраняется в Figma.
+> Перезапуск: **⌘⇧P** → *Run last plugin*
 
 ---
 
-## 3. 🚀 Автозапуск (Launch Agent)
+## 🔧 Для разработчиков
 
-Агент будет запускаться автоматически при входе в систему и перезапускаться при падении.
+### Запуск из исходников (нужен Python 3)
 
-### Установка:
+```bash
+# Установить зависимости (один раз)
+pip3 install pyserial websockets
+
+# Запустить агент
+cd agent && python3 agent.py
+```
+
+Или двойной клик на `start_agent.command`
+(если macOS блокирует: `chmod +x start_agent.command`)
+
+### Сборка standalone .app
+
+```bash
+./build_app.sh
+```
+
+Результат — `Figma Serial Agent.app` (~12 МБ). Копируйте на любой Mac, Python не нужен.
+
+### Автозапуск при входе в систему
 
 ```bash
 ./install_autostart.sh
 launchctl load ~/Library/LaunchAgents/com.figma.serial-controller.plist
 ```
 
-### Управление:
-
-Запустить:
-```bash
-launchctl start com.figma.serial-controller
-```
-
-Остановить:
-```bash
-launchctl stop com.figma.serial-controller
-```
-
-Отключить автозапуск:
-```bash
-launchctl unload ~/Library/LaunchAgents/com.figma.serial-controller.plist
-```
-
-Посмотреть логи:
-```bash
-tail -f ~/Library/Logs/figma-serial-controller.log
-```
-
-Удалить:
-```bash
-launchctl unload ~/Library/LaunchAgents/com.figma.serial-controller.plist
-rm ~/Library/LaunchAgents/com.figma.serial-controller.plist
-```
-
 ---
 
-## 4. 🔌 Установка плагина в Figma
+## ❓ Проблемы
 
-Плагин — это связующее звено между агентом и Figma. Без него контроллер не будет управлять интерфейсом.
-
-### Установка:
-
-1. Откройте **Figma Desktop** (плагин работает только в десктопной версии)
-2. Откройте любой файл
-3. Меню **Plugins → Development → Import plugin from manifest…**
-4. Выберите файл `plugin/manifest.json` из папки проекта:
-   ```
-   figma_serial_controller/plugin/manifest.json
-   ```
-5. Плагин **Figma Serial Controller** появится в меню **Plugins → Development**
-
-### Запуск:
-
-1. Убедитесь, что **агент запущен** (см. выше)
-2. В Figma: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
-3. Откроется окно плагина — оно подключится к агенту по WebSocket
-4. Готово! Крутите энкодеры, нажимайте кнопки — Figma будет реагировать
-
-### Важно:
-
-- Плагин нужно устанавливать **один раз** — он сохраняется в Figma
-- При изменении кода плагина (`code.js`) достаточно перезапустить его в Figma (⌘⇧P → "Run last plugin")
-- Плагин работает только пока открыто его окно в Figma
-
----
-
-## Рекомендация
-
-Для разработки и тестирования используйте **start_agent.command** - видно все логи и легко остановить.
-
-Для постоянной работы используйте **Launch Agent** - работает в фоне, автоматически запускается.
+| Проблема | Решение |
+|----------|---------|
+| «Не удаётся проверить разработчика» | Правый клик → **Открыть** → **Открыть** (один раз) |
+| «Apple could not verify» у `.command` | `xattr -dr com.apple.quarantine .` в папке проекта |
+| «Нет прав доступа» | `chmod +x *.command *.sh` |
+| Агент не видит контроллер | Переподключите USB, проверьте прошивку Arduino |
+| Плагин не подключается | Убедитесь что агент запущен, порт 8765 свободен |

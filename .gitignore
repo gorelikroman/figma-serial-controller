@@ -33,3 +33,8 @@ build/
 
 # Frontend tooling
 node_modules/
+
+# PyInstaller build artifacts
+*.app/
+*.spec
+dist/

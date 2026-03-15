@@ -28,7 +28,16 @@ from websockets.server import serve
 
 # ─── Load Config ───
 SCRIPT_DIR = Path(__file__).parent
-CONFIG_PATH = SCRIPT_DIR / "config.json"
+
+# PyInstaller .app: config.json lives in Contents/Resources
+if getattr(sys, 'frozen', False):
+    _bundle_dir = Path(sys._MEIPASS)
+    CONFIG_PATH = _bundle_dir / "config.json"
+    if not CONFIG_PATH.exists():
+        # Fallback: next to the executable
+        CONFIG_PATH = Path(sys.executable).parent / "config.json"
+else:
+    CONFIG_PATH = SCRIPT_DIR / "config.json"
 
 def load_config():
     with open(CONFIG_PATH, "r") as f:

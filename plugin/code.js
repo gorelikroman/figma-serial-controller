@@ -242,6 +242,17 @@ if (!selection.length && !(typeof cmd === 'string' && cmd.indexOf('open') === 0)
 // ═══════════════════════════════════════════════════════════════
 
 function openInputDialog(cmdName) {
+  const inputCommands = [
+    'openPadXInput',
+    'openPadYInput',
+    'openGapInput',
+    'openPadAllInput',
+    'openCornerInput',
+    'openWidthInput',
+    'openHeightInput',
+    'openFontSizeInput'
+  ];
+
   const title = cmdName === 'openPadXInput' ? 'Padding Horizontal (L+R)'
     : cmdName === 'openPadYInput' ? 'Padding Vertical (T+B)'
     : cmdName === 'openPadAllInput' ? 'Padding All (T+R+B+L)'
@@ -261,10 +272,46 @@ function openInputDialog(cmdName) {
     <input id="v" type="number" step="1" min="0" placeholder="Введите значение" autofocus />
     <div class="hint">Enter — применить, Esc — закрыть</div>
     <script>
+      const INPUT_COMMANDS = new Set(${JSON.stringify(inputCommands)});
+      const CURRENT_TARGET = '${cmdName}';
+      const WS_URL = 'ws://127.0.0.1:8765';
+
       const el = document.getElementById('v');
       function focusInput(){ try{ window.focus(); el.focus(); el.select(); }catch(_){} }
       window.addEventListener('load', () => { focusInput(); setTimeout(focusInput, 0); });
       setTimeout(focusInput, 30);
+
+      let ws = null;
+      let reconnTimer = null;
+      function scheduleReconnect() {
+        if (reconnTimer) clearTimeout(reconnTimer);
+        reconnTimer = setTimeout(connectWS, 1500);
+      }
+
+      function connectWS() {
+        if (ws && ws.readyState <= 1) return;
+        try {
+          ws = new WebSocket(WS_URL);
+        } catch (_) {
+          scheduleReconnect();
+          return;
+        }
+
+        ws.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg && msg.t === 'cmd' && INPUT_COMMANDS.has(msg.command) && msg.command !== CURRENT_TARGET) {
+              parent.postMessage({ pluginMessage: { type: 'switch-input', target: msg.command } }, '*');
+            }
+          } catch (_) {}
+        };
+
+        ws.onclose = () => scheduleReconnect();
+        ws.onerror = () => {};
+      }
+
+      connectWS();
+
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           const val = parseInt(el.value, 10);
@@ -280,6 +327,13 @@ function openInputDialog(cmdName) {
 
   figma.ui.onmessage = async (msg) => {
     if (msg && msg.type === 'close') { figma.closePlugin(); return; }
+    if (msg && msg.type === 'switch-input') {
+      const target = msg.target;
+      if (target && target !== cmdName && inputCommands.includes(target)) {
+        openInputDialog(target);
+      }
+      return;
+    }
     if (msg && msg.type === 'set-single-input') {
       const v = Math.max(0, Math.round(msg.value || 0));
       if (msg.target === 'openPadXInput') setPaddingOnSelection('x', v);
