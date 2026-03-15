@@ -12,16 +12,26 @@ Python-агент обрабатывает их (акселерация энко
 
 Если контроллер уже прошит, **Arduino CLI и перепрошивка не нужны**.
 
-1. Открой репозиторий в браузере: `https://github.com/gorelikroman/figma-serial-controller`
+1. Открой репозиторий в браузере: [gorelikroman/figma-serial-controller](https://github.com/gorelikroman/figma-serial-controller)
 2. Нажми **Code → Download ZIP**
 3. Распакуй ZIP в удобную папку
 4. Один раз на этом Mac установи **Figma Desktop** (само приложение Figma).
-5. Один раз установи **Python 3**:
-    1. Открой `https://www.python.org/downloads/macos/`
+5. Один раз установи **Python 3** (любой вариант):
+
+    **Вариант A (без терминала, через сайт):**
+    1. Открой [python.org (macOS downloads)](https://www.python.org/downloads/macos/)
     2. Скачай актуальный **Python 3.x**: `macOS 64-bit universal2 installer (.pkg)`
     3. Открой скачанный `.pkg` и пройди установку (`Continue` → `Install`)
     4. После установки открой папку `Applications/Python 3.x/` и дважды кликни `Install Certificates.command`
-    5. Если окно Terminal было открыто, закрой и открой его заново
+
+    **Вариант B (через терминал, Homebrew):**
+    ```bash
+    brew install python
+    python3 --version
+    ```
+    Если `brew` не установлен, сначала поставь Homebrew: [brew.sh](https://brew.sh/)
+
+    Если окно Terminal было открыто во время установки Python, закрой и открой его заново.
     Если Python 3 уже установлен, пропусти этот шаг.
 6. В распакованной папке дважды кликни `install_requirements.command`.
     Это установка библиотек проекта (`pyserial`, `websockets`) в установленный Python.
