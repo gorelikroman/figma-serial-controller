@@ -70,6 +70,7 @@ event_buffer: list = []
 buffer_start: float = 0
 plugin_opening: bool = False
 
+
 # Acceleration tick tracking
 enc_tick_times: dict[str, list[float]] = defaultdict(list)
 
@@ -368,6 +369,29 @@ async def ws_broadcast(msg: dict):
     )
 
 
+def queue_plugin_event(evt: dict, reason: str):
+    """Buffer plugin event and ensure auto-open attempt is active.
+
+    If previous auto-open attempt has timed out, clear stale state and retry
+    immediately on the current event.
+    """
+    global plugin_opening, buffer_start
+
+    now = time.time()
+    if plugin_opening and (now - buffer_start) > PLUGIN_OPEN_TIMEOUT:
+        log.warning("Auto-open timeout — retrying plugin launch")
+        event_buffer.clear()
+        plugin_opening = False
+
+    if not plugin_opening:
+        plugin_opening = True
+        buffer_start = now
+        log.info(f"No plugin — auto-opening ({reason})...")
+        asyncio.get_event_loop().run_in_executor(None, open_plugin_menu)
+
+    event_buffer.append(evt)
+
+
 # ═══════════════════════════════════════════════════════════════
 #  Acceleration
 # ═══════════════════════════════════════════════════════════════
@@ -436,22 +460,12 @@ async def handle_line(line: str):
         if ws_clients:
             encoder_accum[(ident, action)] += final_delta
         else:
-            # Auto-open plugin
-            if not plugin_opening:
-                plugin_opening = True
-                buffer_start = time.time()
-                log.info("No plugin — auto-opening...")
-                asyncio.get_event_loop().run_in_executor(None, open_plugin_menu)
-            event_buffer.append({
+            queue_plugin_event({
                 "t": "enc",
                 "id": ident,
                 "delta": final_delta,
                 "action": action,
-            })
-            if time.time() - buffer_start > PLUGIN_OPEN_TIMEOUT:
-                log.warning("Buffer timeout — discarding")
-                event_buffer.clear()
-                plugin_opening = False
+            }, reason="encoder")
         return
 
     # ── Encoder SW / Joystick / Matrix ──
@@ -501,16 +515,7 @@ async def handle_line(line: str):
         if ws_clients:
             await ws_broadcast(evt)
         else:
-            if not plugin_opening:
-                plugin_opening = True
-                buffer_start = time.time()
-                log.info("No plugin — auto-opening for button...")
-                asyncio.get_event_loop().run_in_executor(None, open_plugin_menu)
-            event_buffer.append(evt)
-            if time.time() - buffer_start > PLUGIN_OPEN_TIMEOUT:
-                log.warning("Buffer timeout — discarding")
-                event_buffer.clear()
-                plugin_opening = False
+            queue_plugin_event(evt, reason=f"button:{btn_key}")
         return
 
 
