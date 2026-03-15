@@ -36,13 +36,13 @@ Python-агент обрабатывает их (акселерация энко
     
     Сайт Homebrew: [brew.sh](https://brew.sh/)
 
-        Если во время установки в Terminal появляются вопросы, отвечай так:
-        - `Press RETURN/ENTER to continue` → нажми `Enter`
-        - `[sudo] password for ...` → введи пароль от macOS-аккаунта и нажми `Enter`
-            (символы при вводе пароля не отображаются — это нормально)
-        - `Do you want to install the Command Line Tools` (или окно macOS с предложением установить Developer Tools) → выбирай `Install`
-        - Вопросы формата `Proceed? [Y/n]` → нажимай `Y`, потом `Enter`
-        - Сообщение `python3 --version` в конце (например `Python 3.13.x`) означает, что установка завершена успешно
+    Если во время установки в Terminal появляются вопросы, отвечай так:
+    - `Press RETURN/ENTER to continue` → нажми `Enter`
+    - `[sudo] password for ...` → введи пароль от macOS-аккаунта и нажми `Enter`
+        (символы при вводе пароля не отображаются — это нормально)
+    - `Do you want to install the Command Line Tools` (или окно macOS с предложением установить Developer Tools) → выбирай `Install`
+    - Вопросы формата `Proceed? [Y/n]` → нажимай `Y`, потом `Enter`
+    - Сообщение `python3 --version` в конце (например `Python 3.13.x`) означает, что установка завершена успешно
 
     Если окно Terminal было открыто во время установки Python, закрой и открой его заново.
     Если Python 3 уже установлен, пропусти этот шаг.
