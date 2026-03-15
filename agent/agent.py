@@ -242,8 +242,65 @@ def press_hotkey(keys: list[str]):
         log.error(f"Hotkey failed: {e}")
 
 
+def _apple_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _run_osascript(script: str, timeout: float = 5.0) -> tuple[bool, str]:
+    try:
+        r = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        msg = (r.stderr or r.stdout or "").strip()
+        return (r.returncode == 0, msg)
+    except Exception as e:
+        return (False, str(e))
+
+
+def _build_menu_click_script(parts: list[str]) -> str:
+    escaped = [_apple_escape(p) for p in parts if p]
+    ref = f'menu item "{escaped[-1]}" of menu 1'
+    for parent in reversed(escaped[1:-1]):
+        ref += f' of menu item "{parent}" of menu 1'
+    ref += f' of menu bar item "{escaped[0]}" of menu bar 1'
+
+    return f'''
+    tell application "System Events"
+        tell process "Figma"
+            click {ref}
+        end tell
+    end tell
+    '''
+
+
+def _build_first_command_script(menu_bar: str, dev_item: str, plugin_item: str) -> str:
+    mb = _apple_escape(menu_bar)
+    dev = _apple_escape(dev_item)
+    plugin = _apple_escape(plugin_item)
+    return f'''
+    tell application "System Events"
+        tell process "Figma"
+            click menu item 1 of menu 1 of menu item "{plugin}" of menu 1 of menu item "{dev}" of menu 1 of menu bar item "{mb}" of menu bar 1
+        end tell
+    end tell
+    '''
+
+
+def _build_run_last_plugin_script() -> str:
+    return '''
+    tell application "System Events"
+        tell process "Figma"
+            keystroke "p" using {option down, command down}
+        end tell
+    end tell
+    '''
+
+
 def open_plugin_menu():
-    """Open the Figma plugin via menu navigation."""
+    """Open the Figma plugin via menu navigation with fallbacks."""
     # First, activate Figma if not frontmost
     if not is_figma_frontmost():
         log.info("Activating Figma...")
@@ -256,42 +313,42 @@ def open_plugin_menu():
             return False
 
     # Parse menu path like "Plugins > Development > Figma Serial Controller > 🎛 Serial Controller"
-    parts = [p.strip() for p in PLUGIN_MENU.split(">")]
-    if len(parts) < 2:
-        log.error(f"Bad menu path: {PLUGIN_MENU}")
-        return False
+    parts = [p.strip() for p in PLUGIN_MENU.split(">") if p.strip()]
+    attempts: list[tuple[str, str]] = []
 
-    # Build AppleScript for menu clicking
-    menu_bar_item = parts[0]
-    lines = [f'click menu bar item "{menu_bar_item}" of menu bar 1']
-    for i, part in enumerate(parts[1:]):
-        if i == 0:
-            lines.append(f'click menu item "{part}" of menu 1 of menu bar item "{menu_bar_item}" of menu bar 1')
-        else:
-            # Sub-submenu — build nested reference
-            ref = f'menu item "{part}" of menu 1 of menu item "{parts[i]}" of menu 1'
-            for j in range(i - 1, 0, -1):
-                ref += f' of menu item "{parts[j]}" of menu 1'
-            ref += f' of menu bar item "{menu_bar_item}" of menu bar 1'
-            lines.append(f'click {ref}')
+    if len(parts) >= 2:
+        attempts.append(("configured menu path", _build_menu_click_script(parts)))
 
-    script = f'''
-    tell application "System Events"
-        tell process "Figma"
-            {lines[-1]}
-        end tell
-    end tell
-    '''
-    try:
-        r = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=5)
-        if r.returncode == 0:
-            log.info(f"Opened plugin via menu")
+    # Fallback for environments where emoji title in menu item is unavailable.
+    if parts:
+        last_ascii = parts[-1].encode("ascii", "ignore").decode().strip()
+        if last_ascii and last_ascii != parts[-1]:
+            alt = parts.copy()
+            alt[-1] = last_ascii
+            attempts.append(("menu path without emoji", _build_menu_click_script(alt)))
+
+    menu_bar = parts[0] if len(parts) > 0 else "Plugins"
+    dev_item = parts[1] if len(parts) > 1 else "Development"
+    plugin_item = parts[2] if len(parts) > 2 else PLUGIN_NAME
+
+    # Open first command inside plugin submenu regardless of command title.
+    attempts.append((
+        "first command in configured submenu",
+        _build_first_command_script(menu_bar, dev_item, plugin_item),
+    ))
+
+    # Language-independent fallback in many Figma setups.
+    attempts.append(("run last plugin shortcut", _build_run_last_plugin_script()))
+
+    for label, script in attempts:
+        ok, msg = _run_osascript(script, timeout=5)
+        if ok:
+            log.info(f"Opened plugin ({label})")
             return True
-        log.warning(f"Menu click failed: {r.stderr.strip()}")
-        return False
-    except Exception as e:
-        log.error(f"Plugin open failed: {e}")
-        return False
+        if msg:
+            log.warning(f"Open attempt failed ({label}): {msg}")
+
+    return False
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -387,7 +444,15 @@ def queue_plugin_event(evt: dict, reason: str):
         plugin_opening = True
         buffer_start = now
         log.info(f"No plugin — auto-opening ({reason})...")
-        asyncio.get_event_loop().run_in_executor(None, open_plugin_menu)
+
+        def _open_with_retry_reset(tag: str):
+            global plugin_opening
+            ok = open_plugin_menu()
+            if not ok:
+                plugin_opening = False
+                log.warning(f"Auto-open failed ({tag}) — will retry on next event")
+
+        asyncio.get_event_loop().run_in_executor(None, _open_with_retry_reset, reason)
 
     event_buffer.append(evt)
 
