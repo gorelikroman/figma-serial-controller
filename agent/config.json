@@ -1,0 +1,223 @@
+{
+  "_comment": "\u041c\u0430\u043f\u043f\u0438\u043d\u0433 \u0441\u0438\u0433\u043d\u0430\u043b\u043e\u0432 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u043b\u0435\u0440\u0430 \u2192 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f. \u041c\u0435\u043d\u044f\u0439 \u0431\u0435\u0437 \u043f\u0435\u0440\u0435\u043f\u0440\u043e\u0448\u0438\u0432\u043a\u0438!",
+  "_types": {
+    "plugin": "\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u043a\u043e\u043c\u0430\u043d\u0434\u0443 \u0432 Figma \u043f\u043b\u0430\u0433\u0438\u043d \u0447\u0435\u0440\u0435\u0437 WebSocket",
+    "hotkey": "\u041d\u0430\u0436\u0430\u0442\u044c \u0441\u043e\u0447\u0435\u0442\u0430\u043d\u0438\u0435 \u043a\u043b\u0430\u0432\u0438\u0448 \u0447\u0435\u0440\u0435\u0437 AppleScript (ctrl/option/command/shift + key)"
+  },
+  "encoders": {
+    "E1": {
+      "action": "gap",
+      "step": 1,
+      "accelerate": true,
+      "invert": true
+    },
+    "E2": {
+      "action": "paddingX",
+      "step": 1,
+      "accelerate": true,
+      "invert": true
+    },
+    "E3": {
+      "action": "paddingY",
+      "step": 1,
+      "accelerate": true,
+      "invert": true
+    },
+    "E4": {
+      "action": "width",
+      "step": 2,
+      "accelerate": true,
+      "invert": true
+    },
+    "E5": {
+      "action": "height",
+      "step": 2,
+      "accelerate": true,
+      "invert": true
+    },
+    "E6": {
+      "action": "fontSize",
+      "step": 2,
+      "accelerate": true,
+      "invert": true
+    }
+  },
+  "buttons": {
+    "E1:sw": {
+      "type": "plugin",
+      "command": "openGapInput"
+    },
+    "E2:sw": {
+      "type": "plugin",
+      "command": "openPadXInput"
+    },
+    "E3:sw": {
+      "type": "plugin",
+      "command": "openPadYInput"
+    },
+    "E4:sw": {
+      "type": "plugin",
+      "command": "openWidthInput"
+    },
+    "E5:sw": {
+      "type": "plugin",
+      "command": "openHeightInput"
+    },
+    "E6:sw": {
+      "type": "plugin",
+      "command": "openFontSizeInput"
+    },
+    "JX:tl": {
+      "type": "plugin",
+      "command": "alignBottomRight"
+    },
+    "JX:tc": {
+      "type": "plugin",
+      "command": "alignBottomCenter"
+    },
+    "JX:tr": {
+      "type": "plugin",
+      "command": "alignBottomLeft"
+    },
+    "JX:cl": {
+      "type": "plugin",
+      "command": "alignCenterRight"
+    },
+    "JX:sw": {
+      "type": "plugin",
+      "command": "alignCenter"
+    },
+    "JX:cr": {
+      "type": "plugin",
+      "command": "alignCenterLeft"
+    },
+    "JX:bl": {
+      "type": "plugin",
+      "command": "alignTopRight"
+    },
+    "JX:bc": {
+      "type": "plugin",
+      "command": "alignTopCenter"
+    },
+    "JX:br": {
+      "type": "plugin",
+      "command": "alignTopLeft"
+    },
+    "M1": {
+      "type": "plugin",
+      "command": "openPadAllInput"
+    },
+    "M2": {
+      "type": "plugin",
+      "command": "gapAuto"
+    },
+    "M3": {
+      "type": "plugin",
+      "command": "toggleDirection"
+    },
+    "M4": {
+      "type": "plugin",
+      "command": "wrapEachInAutoLayout"
+    },
+    "M5": {
+      "type": "plugin",
+      "command": "hugContentWidth"
+    },
+    "M6": {
+      "type": "plugin",
+      "command": "fillContentWidth"
+    },
+    "M7": {
+      "type": "plugin",
+      "command": "hugContentHeight"
+    },
+    "M8": {
+      "type": "plugin",
+      "command": "fillContentHeight"
+    },
+    "M9": {
+      "type": "hotkey",
+      "keys": [
+        "option",
+        "command",
+        "b"
+      ]
+    },
+    "M10": {
+      "type": "hotkey",
+      "keys": [
+        "option",
+        "command",
+        "k"
+      ]
+    },
+    "M11": {
+      "type": "plugin",
+      "command": "createComponentSet"
+    },
+    "M12": {
+      "type": "hotkey",
+      "keys": [
+        "ctrl",
+        "option",
+        "command",
+        "k"
+      ]
+    },
+    "M13": {
+      "type": "layer_hold",
+      "layer": "encoder_alt"
+    },
+    "M14": {
+      "type": "plugin",
+      "command": "alignLeftText"
+    },
+    "M15": {
+      "type": "plugin",
+      "command": "alignCenterText"
+    },
+    "M16": {
+      "type": "plugin",
+      "command": "splitTextLines"
+    }
+  },
+  "acceleration": {
+    "thresholds": {
+      "x2": 4,
+      "x4": 8,
+      "x6": 14
+    },
+    "window_sec": 0.5
+  },
+  "serial": {
+    "baud": 115200,
+    "port_patterns": [
+      "cu.usbmodem"
+    ]
+  },
+  "websocket": {
+    "host": "127.0.0.1",
+    "port": 8765
+  },
+  "plugin": {
+    "name": "Figma Serial Controller",
+    "menu_path": "Plugins > Development > Figma Serial Controller > \ud83c\udf9b Serial Controller"
+  },
+  "layers": {
+    "encoder_alt": {
+      "encoders": {
+        "E6": {
+          "action": "cornerRadius",
+          "step": 1,
+          "accelerate": true,
+          "invert": true
+        }
+      },
+      "buttons": {}
+    },
+    "encoder_alt2": {
+      "encoders": {},
+      "buttons": {}
+    }
+  }
+}

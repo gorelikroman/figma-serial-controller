@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Editors
+.vscode/
+.idea/
+
+# OS/temp files
+*.tmp
+*.swp

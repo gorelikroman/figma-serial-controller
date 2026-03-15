@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Config Editor</title>
+  <link rel="icon" type="image/svg+xml" href="icons/figma-black.svg" />
+  <style>
+    :root {
+      --bg: #0b0b0d;
+      --panel: #0f0f10;
+      --card: #141415;
+      --card-2: #18181b;
+      --border: #27272a;
+      --text: #f4f4f5;
+      --muted: #8b8b93;
+      --accent: #facc15;
+      --accent-ink: #0f0f10;
+      --danger: #dc2626;
+      --ok: #22c55e;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+      line-height: 1.6;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      width: 100%;
+      height: 100vh;
+      min-height: 760px;
+    }
+
+    .left {
+      padding: 24px;
+      overflow: auto;
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, #101015 0%, #0c0c10 100%);
+    }
+
+    .right {
+      padding: 24px;
+      overflow: auto;
+      background: var(--panel);
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .figma-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #f4f4f5;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .figma-badge svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    .title {
+      margin: 0;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.4;
+    }
+
+    .subtitle {
+      margin: 8px 0 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 16px;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.err { color: var(--danger); }
+
+    .section-title {
+      margin: 14px 0 8px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .encoders {
+      display: grid;
+      grid-template-columns: repeat(6, 140px);
+      gap: 8px;
+      margin-bottom: 18px;
+      width: fit-content;
+    }
+
+    .encoder-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 6px;
+      width: 140px;
+      height: 82px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      background: #0f1016;
+      cursor: pointer;
+    }
+
+    .encoder-item:hover { border-color: #3f3f46; }
+    .encoder-item.selected {
+      border-color: var(--accent);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    .enc-id {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .enc-action {
+      color: #d4d4d8;
+      font-size: 11px;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .enc-meta {
+      color: var(--muted);
+      font-size: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hardware-layout {
+      display: grid;
+      gap: 8px;
+      align-items: start;
+      margin-top: 8px;
+      width: fit-content;
+    }
+
+    .hardware-top {
+      display: grid;
+      grid-template-columns: 286px 286px;
+      gap: 8px;
+      align-items: start;
+      width: max-content;
+    }
+
+    .joystick-wrap {
+      width: 286px;
+      height: 286px;
+    }
+
+    .joystick-frame {
+      background: #111217;
+      border: 6px solid #4a4a50;
+      padding: 4px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .joystick {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 4px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .joy-cell {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--border);
+      background: var(--card-2);
+      color: #d4d4d8;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .joy-cell.center { color: #71717a; }
+    .joy-cell:hover { border-color: #3f3f46; }
+    .joy-cell.selected {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(70px, 1fr));
+      gap: 6px;
+    }
+
+    .matrix-top {
+      display: grid;
+      grid-template-columns: repeat(2, 140px);
+      gap: 6px;
+    }
+
+    .matrix-bottom {
+      display: grid;
+      grid-template-columns: repeat(4, 140px);
+      gap: 6px;
+    }
+
+    .matrix-btn {
+      width: 140px;
+      height: 140px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card-2);
+      color: #e4e4e7;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .matrix-btn:hover { border-color: #3f3f46; }
+    .matrix-btn.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.22) inset;
+      color: var(--accent);
+    }
+
+    .matrix-btn.big {
+      border-radius: 12px;
+      font-size: 16px;
+    }
+
+    .matrix-btn-id {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: inherit;
+      z-index: 2;
+    }
+
+    .matrix-type {
+      position: absolute;
+      right: 8px;
+      bottom: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 500;
+      z-index: 2;
+    }
+
+    .editor-title {
+      margin: 0 0 18px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.5;
+    }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      border-radius: 0;
+      outline: none;
+      line-height: 1.5;
+    }
+
+    select option {
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cmd-select {
+      position: relative;
+    }
+
+    .cmd-select-trigger {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .cmd-select.open .cmd-select-trigger,
+    .cmd-select-trigger:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .cmd-select-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .cmd-select-label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .cmd-select-caret {
+      color: var(--muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .cmd-select-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      z-index: 20;
+      display: none;
+      padding: 4px;
+    }
+
+    .cmd-select.open .cmd-select-menu {
+      display: block;
+    }
+
+    .cmd-option {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .cmd-option:hover,
+    .cmd-option.active {
+      background: #1a1a1f;
+    }
+
+    .cmd-option-icon {
+      width: 16px;
+      height: 16px;
+      color: #d4d4d8;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cmd-option-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .checks {
+      display: grid;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #d4d4d8;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .check input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      height: 42px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+
+    .btn:hover { border-color: #3f3f46; }
+
+    .btn.primary {
+      border: none;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    .btn.primary:hover { filter: brightness(0.96); }
+
+    .right-tools {
+      margin-top: 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .cmd-icon {
+      width: 48px;
+      height: 48px;
+      color: #d4d4d8;
+      flex-shrink: 0;
+    }
+
+    .matrix-btn .cmd-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .matrix-btn .matrix-type {
+      z-index: 1;
+    }
+
+    .matrix-btn.selected .cmd-icon {
+      color: var(--accent);
+    }
+
+    .enc-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .override-block {
+      border: 1px solid var(--border);
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .override-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .btn-small {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .btn-small:hover { border-color: #3f3f46; }
+    .btn-small.danger { border-color: var(--danger); color: var(--danger); }
+
+    @media (max-width: 1120px) {
+      .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+      .left { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="left">
+      <div class="title-row">
+        <span class="figma-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="6" y="3" width="6" height="6" rx="3" fill="#000000"/>
+            <rect x="6" y="9" width="6" height="6" rx="3" fill="#000000"/>
+            <rect x="6" y="15" width="6" height="6" rx="3" fill="#000000"/>
+            <rect x="12" y="3" width="6" height="6" rx="3" fill="#000000"/>
+            <circle cx="15" cy="12" r="3" fill="#000000"/>
+          </svg>
+        </span>
+        <h1 class="title">CONFIGURATION</h1>
+      </div>
+      <p class="subtitle">Map hardware signals to Figma actions and hotkeys</p>
+      <div class="status" id="status">Connecting…</div>
+
+      <h2 class="section-title">Encoders</h2>
+      <div id="encoders" class="encoders"></div>
+
+      <h2 class="section-title">Joystick & Matrix Buttons</h2>
+      <div class="hardware-layout">
+        <div class="hardware-top">
+          <div class="joystick-wrap">
+            <div class="joystick-frame">
+              <div class="joystick" id="joystick"></div>
+            </div>
+          </div>
+
+          <div class="matrix-top" id="matrix-top"></div>
+        </div>
+
+        <div class="matrix-bottom" id="matrix-bottom"></div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <h2 id="editor-title" class="editor-title">Select control</h2>
+
+      <div id="editor-body"></div>
+
+      <div class="actions">
+        <button class="btn" id="cancel-btn">Cancel</button>
+        <button class="btn primary" id="save-btn">Save</button>
+      </div>
+
+      <div class="right-tools">
+        <button class="btn" id="reload-btn">Reload from Agent</button>
+        <button class="btn" id="reset-btn">Reset to Defaults</button>
+      </div>
+
+      <p class="muted">WebSocket: ws://127.0.0.1:8765</p>
+    </aside>
+  </div>
+
+  <script>
+    const WS_URL = 'ws://127.0.0.1:8765';
+    let ws = null;
+
+    let selected = null; // { kind: 'encoder' | 'button', id: 'E2' | 'M1' | 'JX:tl' }
+    let editorLayerName = '';
+
+    // Default config — UI renders immediately, agent overwrites on connect
+    const DEFAULT_CONFIG = {
+      encoders: {
+        E1: { action: 'gap', step: 1, accelerate: true, invert: true },
+        E2: { action: 'paddingX', step: 1, accelerate: true, invert: true },
+        E3: { action: 'paddingY', step: 1, accelerate: true, invert: true },
+        E4: { action: 'width', step: 2, accelerate: true, invert: true },
+        E5: { action: 'height', step: 2, accelerate: true, invert: true },
+        E6: { action: 'fontSize', step: 2, accelerate: true, invert: true }
+      },
+      buttons: {
+        'E1:sw': { type: 'plugin', command: 'openGapInput' },
+        'E2:sw': { type: 'plugin', command: 'openPadXInput' },
+        'E3:sw': { type: 'plugin', command: 'openPadYInput' },
+        'E4:sw': { type: 'plugin', command: 'openWidthInput' },
+        'E5:sw': { type: 'plugin', command: 'openHeightInput' },
+        'E6:sw': { type: 'plugin', command: 'openFontSizeInput' },
+        'JX:tl': { type: 'plugin', command: 'alignBottomRight' },
+        'JX:tc': { type: 'plugin', command: 'alignBottomCenter' },
+        'JX:tr': { type: 'plugin', command: 'alignBottomLeft' },
+        'JX:cl': { type: 'plugin', command: 'alignCenterRight' },
+        'JX:sw': { type: 'plugin', command: 'alignCenter' },
+        'JX:cr': { type: 'plugin', command: 'alignCenterLeft' },
+        'JX:bl': { type: 'plugin', command: 'alignTopRight' },
+        'JX:bc': { type: 'plugin', command: 'alignTopCenter' },
+        'JX:br': { type: 'plugin', command: 'alignTopLeft' },
+        M1: { type: 'plugin', command: 'openPadAllInput' },
+        M2: { type: 'plugin', command: 'gapAuto' },
+        M3: { type: 'plugin', command: 'toggleDirection' },
+        M4: { type: 'plugin', command: 'wrapEachInAutoLayout' },
+        M5: { type: 'plugin', command: 'hugContentWidth' },
+        M6: { type: 'plugin', command: 'fillContentWidth' },
+        M7: { type: 'plugin', command: 'hugContentHeight' },
+        M8: { type: 'plugin', command: 'fillContentHeight' },
+        M9: { type: 'hotkey', keys: ['option', 'command', 'b'] },
+        M10: { type: 'hotkey', keys: ['option', 'command', 'k'] },
+        M11: { type: 'plugin', command: 'createComponentSet' },
+        M12: { type: 'hotkey', keys: ['ctrl', 'option', 'command', 'k'] },
+        M13: { type: 'layer_hold', layer: 'encoder_alt' },
+        M14: { type: 'plugin', command: 'alignLeftText' },
+        M15: { type: 'plugin', command: 'alignCenterText' },
+        M16: { type: 'plugin', command: 'splitTextLines' }
+      },
+      layers: {
+        encoder_alt: {
+          encoders: {
+            E6: { action: 'cornerRadius', step: 1, accelerate: true, invert: true }
+          },
+          buttons: {}
+        }
+      }
+    };
+
+    let config = clone(DEFAULT_CONFIG);
+    let draft = clone(DEFAULT_CONFIG);
+
+    const ENCODER_ACTIONS = [
+      'gap', 'paddingX', 'paddingY', 'width', 'height', 'fontSize',
+      'opacity', 'cornerRadius', 'strokeWidth'
+    ];
+
+    const ENCODER_IDS = ['E1', 'E2', 'E3', 'E4', 'E5', 'E6'];
+
+    // Safety mapping: keep physical joystick directions aligned with expected commands.
+    const JOYSTICK_SAFE_MAPPING = {
+      'JX:tl': 'alignBottomRight',
+      'JX:tc': 'alignBottomCenter',
+      'JX:tr': 'alignBottomLeft',
+      'JX:cl': 'alignCenterRight',
+      'JX:sw': 'alignCenter',
+      'JX:cr': 'alignCenterLeft',
+      'JX:bl': 'alignTopRight',
+      'JX:bc': 'alignTopCenter',
+      'JX:br': 'alignTopLeft'
+    };
+
+    const PLUGIN_COMMANDS = [
+      'openGapInput', 'openPadXInput', 'openPadYInput', 'openPadAllInput',
+      'openWidthInput', 'openHeightInput', 'openFontSizeInput', 'openCornerInput',
+      'toggleDirection', 'gapAuto', 'wrapEachInAutoLayout',
+      'alignTopLeft', 'alignTopCenter', 'alignTopRight',
+      'alignCenterLeft', 'alignCenter', 'alignCenterRight',
+      'alignBottomLeft', 'alignBottomCenter', 'alignBottomRight',
+      'hugContentWidth', 'fillContentWidth', 'fixedWidth',
+      'hugContentHeight', 'fillContentHeight', 'fixedHeight',
+      'createMultipleComponents', 'createComponentSet',
+      'splitTextLines', 'alignCenterText', 'alignLeftText'
+    ];
+
+    // Human-readable названия команд
+    const COMMAND_LABELS = {
+      openGapInput: 'Gap between items',
+      openPadXInput: 'Padding horizontal',
+      openPadYInput: 'Padding vertical',
+      openPadAllInput: 'Padding all sides',
+      openWidthInput: 'Set width',
+      openHeightInput: 'Set height',
+      openFontSizeInput: 'Font size',
+      openCornerInput: 'Corner radius',
+      toggleDirection: 'Toggle direction',
+      gapAuto: 'Gap → Auto',
+      wrapEachInAutoLayout: 'Wrap in auto layout',
+      alignTopLeft: 'Align: Top Left',
+      alignTopCenter: 'Align: Top Center',
+      alignTopRight: 'Align: Top Right',
+      alignCenterLeft: 'Align: Center Left',
+      alignCenter: 'Align: Center',
+      alignCenterRight: 'Align: Center Right',
+      alignBottomLeft: 'Align: Bottom Left',
+      alignBottomCenter: 'Align: Bottom Center',
+      alignBottomRight: 'Align: Bottom Right',
+      hugContentWidth: 'Width: Hug contents',
+      fillContentWidth: 'Width: Fill container',
+      fixedWidth: 'Width: Fixed',
+      hugContentHeight: 'Height: Hug contents',
+      fillContentHeight: 'Height: Fill container',
+      fixedHeight: 'Height: Fixed',
+      createMultipleComponents: 'Create components',
+      createComponentSet: 'Create component set',
+      splitTextLines: 'Split text lines',
+      alignCenterText: 'Text: Align center',
+      alignLeftText: 'Text: Align left'
+    };
+
+    // SVG иконки для команд плагина (замените placeholder на настоящие SVG из Figma)
+    const COMMAND_ICONS = {
+      // Gap & Padding
+      openGapInput: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="6" height="8" fill="currentColor"/><rect x="14" y="8" width="6" height="8" fill="currentColor"/><path d="M11 10v4m0 0l-1.5-1.5m1.5 1.5l1.5-1.5" stroke="currentColor" stroke-width="1.5"/></svg>',
+      openPadXInput: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M9 12h6m0 0l-1.5-1.5m1.5 1.5l-1.5 1.5" stroke="currentColor" stroke-width="1.5"/></svg>',
+      openPadYInput: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M12 9v6m0 0l1.5-1.5m0 1.5l-1.5 1.5" stroke="currentColor" stroke-width="1.5"/></svg>',
+      openPadAllInput: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M12 9v6m-3-3h6" stroke="currentColor" stroke-width="1.5"/></svg>',
+      
+      // Dimensions
+      openWidthInput: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="10" width="12" height="4" stroke="currentColor" stroke-width="1.5"/><path d="M8 12h8m0 0l-1.5-1.5m1.5 1.5l-1.5 1.5m-5-1.5l-1.5-1.5m1.5 1.5l-1.5 1.5" stroke="currentColor" stroke-width="1.5"/></svg>',
+      openHeightInput: '<svg viewBox="0 0 24 24" fill="none"><rect x="10" y="6" width="4" height="12" stroke="currentColor" stroke-width="1.5"/><path d="M12 8v8m0 0l1.5-1.5m-1.5 1.5l-1.5-1.5m1.5-5l1.5-1.5m-1.5 1.5l-1.5-1.5" stroke="currentColor" stroke-width="1.5"/></svg>',
+      
+      // Text
+      openFontSizeInput: '<svg viewBox="0 0 24 24" fill="none"><text x="6" y="16" font-size="12" fill="currentColor" font-weight="bold">A</text><text x="14" y="18" font-size="8" fill="currentColor">a</text></svg>',
+      
+      // Corner
+      openCornerInput: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="3" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M6 9h3v-3" stroke="currentColor" stroke-width="1.5"/></svg>',
+      
+      // Direction
+      toggleDirection: '<svg viewBox="0 0 24 24" fill="none"><path d="M8 6v12m0-12l-2 2m2-2l2 2m6 10V6m0 12l-2-2m2 2l2-2" stroke="currentColor" stroke-width="1.5"/></svg>',
+      
+      // Auto Layout
+      gapAuto: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="5" height="8" fill="currentColor"/><rect x="15" y="8" width="5" height="8" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+      wrapEachInAutoLayout: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="7" height="6" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="13" y="5" width="7" height="6" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="4" y="13" width="7" height="6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>',
+      
+      // Alignment (9 positions)
+      alignTopLeft: '<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="5" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignTopCenter: '<svg viewBox="0 0 24 24" fill="none"><rect x="9.5" y="5" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignTopRight: '<svg viewBox="0 0 24 24" fill="none"><rect x="14" y="5" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignCenterLeft: '<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="9.5" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignCenter: '<svg viewBox="0 0 24 24" fill="none"><rect x="9.5" y="9.5" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignCenterRight: '<svg viewBox="0 0 24 24" fill="none"><rect x="14" y="9.5" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignBottomLeft: '<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="14" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignBottomCenter: '<svg viewBox="0 0 24 24" fill="none"><rect x="9.5" y="14" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      alignBottomRight: '<svg viewBox="0 0 24 24" fill="none"><rect x="14" y="14" width="5" height="5" fill="currentColor"/><rect x="5" y="5" width="14" height="14" stroke="currentColor" stroke-width="1" fill="none"/></svg>',
+      
+      // Resizing modes
+      hugContentWidth: '<svg viewBox="0 0 24 24" fill="none"><rect x="9" y="8" width="6" height="8" fill="currentColor"/><path d="M7 8v8m10-8v8" stroke="currentColor" stroke-width="1.5"/></svg>',
+      fillContentWidth: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="8" width="12" height="8" fill="currentColor"/><path d="M6 6v12m12-12v12" stroke="currentColor" stroke-width="1.5"/></svg>',
+      fixedWidth: '<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="8" height="8" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 6h8m-8 12h8" stroke="currentColor" stroke-width="1.5"/></svg>',
+      hugContentHeight: '<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="9" width="8" height="6" fill="currentColor"/><path d="M8 7h8m-8 10h8" stroke="currentColor" stroke-width="1.5"/></svg>',
+      fillContentHeight: '<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="6" width="8" height="12" fill="currentColor"/><path d="M6 6h12m-12 12h12" stroke="currentColor" stroke-width="1.5"/></svg>',
+      fixedHeight: '<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="8" height="8" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M6 8v8m12-8v8" stroke="currentColor" stroke-width="1.5"/></svg>',
+      
+      // Components
+      createMultipleComponents: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="13" y="4" width="7" height="7" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="4" y="13" width="7" height="7" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="13" y="13" width="7" height="7" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>',
+      createComponentSet: '<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="5" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="12" cy="8" r="1.5" fill="currentColor"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/></svg>',
+      
+      // Text
+      splitTextLines: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 8h12M6 12h12M6 16h8" stroke="currentColor" stroke-width="1.5"/></svg>',
+      alignCenterText: '<svg viewBox="0 0 24 24" fill="none"><path d="M7 8h10M9 12h6M8 16h8" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v12" stroke="currentColor" stroke-width="1" opacity="0.3"/></svg>',
+      alignLeftText: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 8h10M6 12h6M6 16h8" stroke="currentColor" stroke-width="1.5"/><path d="M6 6v12" stroke="currentColor" stroke-width="1" opacity="0.3"/></svg>'
+    };
+
+    // Иконки для encoder actions
+    const ENCODER_ACTION_ICONS = {
+      gap: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="6" height="8" fill="currentColor"/><rect x="14" y="8" width="6" height="8" fill="currentColor"/></svg>',
+      paddingX: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"/><path d="M9 12h6" stroke="currentColor" stroke-width="2"/></svg>',
+      paddingY: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 9v6" stroke="currentColor" stroke-width="2"/></svg>',
+      width: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="10" width="12" height="4" stroke="currentColor" stroke-width="2"/><path d="M8 12h8" stroke="currentColor" stroke-width="2"/></svg>',
+      height: '<svg viewBox="0 0 24 24" fill="none"><rect x="10" y="6" width="4" height="12" stroke="currentColor" stroke-width="2"/><path d="M12 8v8" stroke="currentColor" stroke-width="2"/></svg>',
+      fontSize: '<svg viewBox="0 0 24 24" fill="none"><text x="6" y="16" font-size="12" fill="currentColor" font-weight="bold">A</text></svg>',
+      opacity: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6" fill="currentColor" opacity="0.5"/></svg>',
+      cornerRadius: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>',
+      strokeWidth: '<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="6" width="14" height="12" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 20h8" stroke="currentColor" stroke-width="2.5"/></svg>'
+    };
+
+    function getCommandIcon(command) {
+      return COMMAND_ICONS[command] || '';
+    }
+
+    function getEncoderIcon(action) {
+      return ENCODER_ACTION_ICONS[action] || '';
+    }
+
+    const JOYSTICK = [
+      { id: 'JX:tl', label: 'TL' },
+      { id: 'JX:tc', label: 'TC' },
+      { id: 'JX:tr', label: 'TR' },
+      { id: 'JX:cl', label: 'CL' },
+      { id: 'JX:sw', label: 'CC', center: true },
+      { id: 'JX:cr', label: 'CR' },
+      { id: 'JX:bl', label: 'BL' },
+      { id: 'JX:bc', label: 'BC' },
+      { id: 'JX:br', label: 'BR' }
+    ];
+
+    function clone(v) {
+      return JSON.parse(JSON.stringify(v));
+    }
+
+    function setStatus(text, kind) {
+      const el = document.getElementById('status');
+      el.textContent = text;
+      el.className = 'status' + (kind ? ' ' + kind : '');
+    }
+
+    function connect() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        setStatus('Connected', 'ok');
+        ws.send(JSON.stringify({ t: 'get_config' }));
+      };
+
+      ws.onclose = () => {
+        setStatus('Offline — default config', 'err');
+        setTimeout(connect, 1800);
+      };
+
+      ws.onerror = () => setStatus('Offline — default config', 'err');
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.t === 'config') {
+            config = msg.config;
+            draft = clone(config);
+            if (!selected) selected = { kind: 'encoder', id: 'E2' };
+            renderAll();
+          }
+          if (msg.t === 'config_saved') {
+            setStatus('Config saved', 'ok');
+          }
+        } catch (e) {
+          // ignore malformed message
+        }
+      };
+    }
+
+    function getEncoder(id) {
+      if (!draft.encoders[id]) draft.encoders[id] = { action: 'gap', step: 1, accelerate: true, invert: false };
+      return draft.encoders[id];
+    }
+
+    function getButton(id) {
+      if (!draft.buttons[id]) draft.buttons[id] = { type: 'none' };
+      return draft.buttons[id];
+    }
+
+    function getLayerNames() {
+      const names = new Set(Object.keys(draft.layers || {}));
+      for (const btn of Object.values(draft.buttons || {})) {
+        if (btn && btn.type === 'layer_hold' && typeof btn.layer === 'string' && btn.layer.trim()) {
+          names.add(btn.layer.trim());
+        }
+      }
+      return [...names];
+    }
+
+    function getPrimaryHoldLayerName() {
+      for (const btn of Object.values(draft.buttons || {})) {
+        if (btn && btn.type === 'layer_hold' && typeof btn.layer === 'string' && btn.layer.trim()) {
+          return btn.layer.trim();
+        }
+      }
+      const existing = Object.keys(draft.layers || {});
+      return existing[0] || 'encoder_alt';
+    }
+
+    function ensureLayer(layerName) {
+      const safeName = (layerName || '').trim() || 'encoder_alt';
+      if (!draft.layers) draft.layers = {};
+      if (!draft.layers[safeName]) draft.layers[safeName] = { encoders: {}, buttons: {} };
+      if (!draft.layers[safeName].encoders) draft.layers[safeName].encoders = {};
+      if (!draft.layers[safeName].buttons) draft.layers[safeName].buttons = {};
+      return draft.layers[safeName];
+    }
+
+    function ensureEncoderOverride(layerName, encId) {
+      const layer = ensureLayer(layerName);
+      if (!layer.encoders[encId]) {
+        layer.encoders[encId] = { action: 'cornerRadius', step: 1, accelerate: true, invert: true };
+      }
+      return layer.encoders[encId];
+    }
+
+    function ensureButtonOverride(layerName, btnId) {
+      const layer = ensureLayer(layerName);
+      if (!layer.buttons[btnId]) {
+        layer.buttons[btnId] = { type: 'plugin', command: PLUGIN_COMMANDS[0] || '' };
+      }
+      return layer.buttons[btnId];
+    }
+
+    function normalizeLayerHoldButtons() {
+      const fallback = (editorLayerName || getPrimaryHoldLayerName() || 'encoder_alt').trim();
+      if (!draft.buttons) return;
+      for (const btn of Object.values(draft.buttons)) {
+        if (!btn || btn.type !== 'layer_hold') continue;
+        const current = typeof btn.layer === 'string' ? btn.layer.trim() : '';
+        btn.layer = current || fallback;
+      }
+    }
+
+    function enforceJoystickSafeMapping() {
+      if (!draft.buttons) draft.buttons = {};
+      for (const [id, command] of Object.entries(JOYSTICK_SAFE_MAPPING)) {
+        draft.buttons[id] = { type: 'plugin', command };
+      }
+    }
+
+    function buttonTypeShort(btn) {
+      if (!btn || !btn.type || btn.type === 'none') return '—';
+      if (btn.type === 'plugin') return 'cmd';
+      if (btn.type === 'hotkey') return 'key';
+      if (btn.type === 'layer_hold') return 'hold';
+      return btn.type;
+    }
+
+    function selectControl(kind, id) {
+      selected = { kind, id };
+      if (kind === 'button' && draft?.buttons?.[id]?.type === 'layer_hold' && draft.buttons[id].layer) {
+        editorLayerName = draft.buttons[id].layer;
+      }
+      renderAll();
+    }
+
+    function renderEncoders() {
+      const root = document.getElementById('encoders');
+      root.innerHTML = '';
+
+      for (const id of ENCODER_IDS) {
+        const enc = getEncoder(id);
+
+        const row = document.createElement('div');
+        row.className = 'encoder-item' + (selected?.kind === 'encoder' && selected?.id === id ? ' selected' : '');
+        row.innerHTML = `
+          <div class="enc-id">${id}</div>
+          <div class="enc-action">${enc.action}</div>
+          <div class="enc-meta">step:${enc.step} ${enc.accelerate ? '⚡' : ''} ${enc.invert ? '⇄' : ''}</div>
+        `;
+        row.addEventListener('click', () => selectControl('encoder', id));
+        root.appendChild(row);
+      }
+    }
+
+    function renderJoystick() {
+      const root = document.getElementById('joystick');
+      root.innerHTML = '';
+
+      for (const j of JOYSTICK) {
+        const btn = getButton(j.id);
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'joy-cell' + (j.center ? ' center' : '') + (selected?.kind === 'button' && selected?.id === j.id ? ' selected' : '');
+        cell.textContent = j.label;
+        cell.title = `${j.id} (${buttonTypeShort(btn)})`;
+        cell.addEventListener('click', () => selectControl('button', j.id));
+        root.appendChild(cell);
+      }
+    }
+
+    function renderMatrix() {
+      const top = document.getElementById('matrix-top');
+      const bottom = document.getElementById('matrix-bottom');
+      top.innerHTML = '';
+      bottom.innerHTML = '';
+
+      for (let i = 1; i <= 16; i++) {
+        const id = `M${i}`;
+        const btn = getButton(id);
+
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'matrix-btn' + (i <= 4 ? ' big' : '') + (selected?.kind === 'button' && selected?.id === id ? ' selected' : '');
+        
+        let iconHtml = '';
+        if (btn.type === 'plugin' && btn.command) {
+          const icon = getCommandIcon(btn.command);
+          if (icon) iconHtml = `<span class="cmd-icon">${icon}</span>`;
+        }
+        
+        b.innerHTML = `<span class="matrix-btn-id">${id}</span>${iconHtml}<span class="matrix-type">${buttonTypeShort(btn)}</span>`;
+        b.addEventListener('click', () => selectControl('button', id));
+        if (i <= 4) {
+          top.appendChild(b);
+        } else {
+          bottom.appendChild(b);
+        }
+      }
+    }
+
+    function renderEditor() {
+      const title = document.getElementById('editor-title');
+      const body = document.getElementById('editor-body');
+      body.innerHTML = '';
+
+      if (!selected) {
+        title.textContent = 'Select control';
+        return;
+      }
+
+      if (selected.kind === 'encoder') {
+        const enc = getEncoder(selected.id);
+        title.textContent = `${selected.id} · ${String(enc.action || 'action').toUpperCase()}`;
+
+        body.appendChild(fieldSelect('ACTION', enc.action || 'gap', ENCODER_ACTIONS, (v) => {
+          enc.action = v;
+          renderAll();
+        }));
+
+        body.appendChild(fieldNumber('STEP SIZE', enc.step ?? 1, 1, 20, (v) => {
+          enc.step = v;
+          renderEncoders();
+        }));
+
+        const checks = document.createElement('div');
+        checks.className = 'checks';
+        checks.appendChild(fieldCheck('ACCELERATE', !!enc.accelerate, (v) => {
+          enc.accelerate = v;
+          renderEncoders();
+        }));
+        checks.appendChild(fieldCheck('INVERT', !!enc.invert, (v) => {
+          enc.invert = v;
+          renderEncoders();
+        }));
+        body.appendChild(checks);
+
+        const layerNames = getLayerNames();
+        if (!editorLayerName) editorLayerName = getPrimaryHoldLayerName();
+        if (!layerNames.includes(editorLayerName)) layerNames.unshift(editorLayerName);
+
+        const layerBlock = document.createElement('div');
+        layerBlock.className = 'override-block';
+
+        const layerTitle = document.createElement('div');
+        layerTitle.className = 'section-title';
+        layerTitle.style.margin = '0 0 10px';
+        layerTitle.textContent = 'Second Layer';
+        layerBlock.appendChild(layerTitle);
+
+        layerBlock.appendChild(fieldSelect('LAYER', editorLayerName, layerNames, (v) => {
+          editorLayerName = v;
+          renderEditor();
+        }));
+
+        const addLayerBtn = document.createElement('button');
+        addLayerBtn.type = 'button';
+        addLayerBtn.className = 'btn-small';
+        addLayerBtn.textContent = '+ New Layer';
+        addLayerBtn.addEventListener('click', () => {
+          const name = prompt('Layer name (e.g. encoder_alt):', editorLayerName || 'encoder_alt');
+          if (!name || !name.trim()) return;
+          const key = name.trim();
+          ensureLayer(key);
+          editorLayerName = key;
+          renderAll();
+        });
+        layerBlock.appendChild(addLayerBtn);
+
+        const layerCfg = (draft.layers && draft.layers[editorLayerName]) ? draft.layers[editorLayerName] : null;
+        const layerEncoders = (layerCfg && layerCfg.encoders) ? layerCfg.encoders : {};
+        const hasOverride = !!layerEncoders[selected.id];
+
+        const overrideToggle = fieldCheck('USE OVERRIDE FOR THIS ENCODER', hasOverride, (v) => {
+          if (v) {
+            ensureEncoderOverride(editorLayerName, selected.id);
+          } else {
+            if (draft.layers && draft.layers[editorLayerName] && draft.layers[editorLayerName].encoders) {
+              delete draft.layers[editorLayerName].encoders[selected.id];
+            }
+          }
+          renderAll();
+        });
+        overrideToggle.style.marginTop = '10px';
+        layerBlock.appendChild(overrideToggle);
+
+        if (hasOverride) {
+          const ov = layerEncoders[selected.id];
+          layerBlock.appendChild(fieldSelect('ACTION', ov.action || 'cornerRadius', ENCODER_ACTIONS, (v) => {
+            ov.action = v;
+            renderAll();
+          }));
+
+          layerBlock.appendChild(fieldNumber('STEP SIZE', ov.step ?? 1, 1, 20, (v) => {
+            ov.step = v;
+          }));
+
+          const layerChecks = document.createElement('div');
+          layerChecks.className = 'checks';
+          layerChecks.appendChild(fieldCheck('ACCELERATE', !!ov.accelerate, (v) => {
+            ov.accelerate = v;
+          }));
+          layerChecks.appendChild(fieldCheck('INVERT', !!ov.invert, (v) => {
+            ov.invert = v;
+          }));
+          layerBlock.appendChild(layerChecks);
+        }
+
+        const hint = document.createElement('p');
+        hint.className = 'muted';
+        hint.textContent = 'This override is used while any layer_hold button with this layer name is held.';
+        layerBlock.appendChild(hint);
+
+        body.appendChild(layerBlock);
+        return;
+      }
+
+      const btn = getButton(selected.id);
+      title.textContent = selected.id;
+
+      body.appendChild(fieldSelect('TYPE', btn.type || 'none', ['none', 'plugin', 'hotkey', 'layer_hold'], (v) => {
+        btn.type = v;
+        if (v !== 'plugin') delete btn.command;
+        if (v !== 'hotkey') delete btn.keys;
+        if (v !== 'layer_hold') delete btn.layer;
+        if (v === 'plugin' && !btn.command) btn.command = PLUGIN_COMMANDS[0] || '';
+        if (v === 'hotkey' && !btn.keys) btn.keys = [];
+        if (v === 'layer_hold' && !btn.layer) {
+          btn.layer = getPrimaryHoldLayerName();
+        }
+        renderAll();
+      }));
+
+      if (btn.type === 'plugin') {
+        body.appendChild(fieldCommandSelect('PLUGIN COMMAND', btn.command || '', (v) => {
+          btn.command = v;
+          renderMatrix();
+          renderJoystick();
+        }));
+      }
+
+      if (btn.type === 'hotkey') {
+        body.appendChild(fieldText('HOTKEY', (btn.keys || []).join('+'), 'ctrl+option+k', (v) => {
+          btn.keys = v.split('+').map(k => k.trim()).filter(Boolean);
+          renderMatrix();
+          renderJoystick();
+        }));
+      }
+
+      if (btn.type === 'layer_hold') {
+        if (!btn.layer || !btn.layer.trim()) {
+          btn.layer = getPrimaryHoldLayerName();
+        }
+
+        body.appendChild(fieldText('LAYER NAME', btn.layer, 'encoder_alt', (v) => {
+          btn.layer = v.trim();
+          editorLayerName = btn.layer || editorLayerName;
+        }));
+
+        const hint = document.createElement('p');
+        hint.className = 'muted';
+        hint.textContent = 'Select an encoder to set what this layer does while button is held.';
+        body.appendChild(hint);
+      }
+
+      const layerNames = getLayerNames();
+      if (!editorLayerName) editorLayerName = getPrimaryHoldLayerName();
+      if (!layerNames.includes(editorLayerName)) layerNames.unshift(editorLayerName);
+
+      const layerBlock = document.createElement('div');
+      layerBlock.className = 'override-block';
+
+      const layerTitle = document.createElement('div');
+      layerTitle.className = 'section-title';
+      layerTitle.style.margin = '0 0 10px';
+      layerTitle.textContent = 'Second Layer';
+      layerBlock.appendChild(layerTitle);
+
+      layerBlock.appendChild(fieldSelect('LAYER', editorLayerName, layerNames, (v) => {
+        editorLayerName = v;
+        renderEditor();
+      }));
+
+      const addLayerBtn = document.createElement('button');
+      addLayerBtn.type = 'button';
+      addLayerBtn.className = 'btn-small';
+      addLayerBtn.textContent = '+ New Layer';
+      addLayerBtn.addEventListener('click', () => {
+        const name = prompt('Layer name (e.g. encoder_alt):', editorLayerName || 'encoder_alt');
+        if (!name || !name.trim()) return;
+        const key = name.trim();
+        ensureLayer(key);
+        editorLayerName = key;
+        renderAll();
+      });
+      layerBlock.appendChild(addLayerBtn);
+
+      const layerCfg = (draft.layers && draft.layers[editorLayerName]) ? draft.layers[editorLayerName] : null;
+      const layerButtons = (layerCfg && layerCfg.buttons) ? layerCfg.buttons : {};
+      const hasOverride = !!layerButtons[selected.id];
+
+      const overrideToggle = fieldCheck('USE OVERRIDE FOR THIS BUTTON', hasOverride, (v) => {
+        if (v) {
+          ensureButtonOverride(editorLayerName, selected.id);
+        } else if (draft.layers && draft.layers[editorLayerName] && draft.layers[editorLayerName].buttons) {
+          delete draft.layers[editorLayerName].buttons[selected.id];
+        }
+        renderAll();
+      });
+      overrideToggle.style.marginTop = '10px';
+      layerBlock.appendChild(overrideToggle);
+
+      if (hasOverride) {
+        const ov = layerButtons[selected.id];
+
+        layerBlock.appendChild(fieldSelect('TYPE', ov.type || 'plugin', ['none', 'plugin', 'hotkey'], (v) => {
+          ov.type = v;
+          if (v !== 'plugin') delete ov.command;
+          if (v !== 'hotkey') delete ov.keys;
+          if (v === 'plugin' && !ov.command) ov.command = PLUGIN_COMMANDS[0] || '';
+          if (v === 'hotkey' && !ov.keys) ov.keys = [];
+          renderAll();
+        }));
+
+        if (ov.type === 'plugin') {
+          layerBlock.appendChild(fieldCommandSelect('PLUGIN COMMAND', ov.command || '', (v) => {
+            ov.command = v;
+          }));
+        }
+
+        if (ov.type === 'hotkey') {
+          layerBlock.appendChild(fieldText('HOTKEY', (ov.keys || []).join('+'), 'ctrl+option+k', (v) => {
+            ov.keys = v.split('+').map(k => k.trim()).filter(Boolean);
+          }));
+        }
+      }
+
+      const hint2 = document.createElement('p');
+      hint2.className = 'muted';
+      hint2.textContent = 'This button override is used while selected layer is active.';
+      layerBlock.appendChild(hint2);
+
+      body.appendChild(layerBlock);
+    }
+
+    function fieldSelect(label, value, options, onChange) {
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      const id = `f_${label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${Math.random().toString(36).slice(2, 8)}`;
+      wrap.innerHTML = `<label for="${id}">${label}</label>`;
+      const select = document.createElement('select');
+      select.id = id;
+      options.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        if (String(opt) === String(value)) o.selected = true;
+        select.appendChild(o);
+      });
+      select.addEventListener('change', (e) => onChange(e.target.value));
+      wrap.appendChild(select);
+      return wrap;
+    }
+
+    function fieldCommandSelect(label, value, onChange) {
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      const id = `f_${label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${Math.random().toString(36).slice(2, 8)}`;
+      wrap.innerHTML = `<label for="${id}">${label}</label>`;
+
+      const select = document.createElement('div');
+      select.id = id;
+      select.className = 'cmd-select';
+
+      const trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'cmd-select-trigger';
+
+      const menu = document.createElement('div');
+      menu.className = 'cmd-select-menu';
+
+      function setTrigger(cmd) {
+        const icon = getCommandIcon(cmd);
+        const name = COMMAND_LABELS[cmd] || cmd;
+        trigger.innerHTML = `
+          <span class="cmd-select-value">
+            <span class="cmd-option-icon">${icon || ''}</span>
+            <span class="cmd-select-label">${name}</span>
+          </span>
+          <span class="cmd-select-caret">▾</span>
+        `;
+      }
+
+      PLUGIN_COMMANDS.forEach(cmd => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'cmd-option' + (cmd === value ? ' active' : '');
+        const icon = getCommandIcon(cmd);
+        const name = COMMAND_LABELS[cmd] || cmd;
+        option.innerHTML = `<span class="cmd-option-icon">${icon || ''}</span><span>${name}</span>`;
+        option.addEventListener('click', () => {
+          setTrigger(cmd);
+          onChange(cmd);
+          select.classList.remove('open');
+        });
+        menu.appendChild(option);
+      });
+
+      setTrigger(value || PLUGIN_COMMANDS[0]);
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        select.classList.toggle('open');
+      });
+
+      select.appendChild(trigger);
+      select.appendChild(menu);
+      wrap.appendChild(select);
+      return wrap;
+    }
+
+    document.addEventListener('click', (e) => {
+      document.querySelectorAll('.cmd-select.open').forEach((node) => {
+        if (!node.contains(e.target)) node.classList.remove('open');
+      });
+    });
+
+    function fieldNumber(label, value, min, max, onChange) {
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      const id = `f_${label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${Math.random().toString(36).slice(2, 8)}`;
+      wrap.innerHTML = `<label for="${id}">${label}</label>`;
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.id = id;
+      input.min = String(min);
+      input.max = String(max);
+      input.value = String(value ?? 1);
+      input.addEventListener('change', (e) => onChange(Math.max(min, Math.min(max, parseInt(e.target.value || '1', 10)))));
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    function fieldText(label, value, placeholder, onInput) {
+      const wrap = document.createElement('div');
+      wrap.className = 'field';
+      const id = `f_${label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${Math.random().toString(36).slice(2, 8)}`;
+      wrap.innerHTML = `<label for="${id}">${label}</label>`;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = id;
+      input.value = value || '';
+      input.placeholder = placeholder || '';
+      input.addEventListener('input', (e) => onInput(e.target.value));
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    function fieldCheck(label, checked, onChange) {
+      const row = document.createElement('label');
+      row.className = 'check';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = checked;
+      input.addEventListener('change', (e) => onChange(e.target.checked));
+      row.appendChild(input);
+      row.appendChild(document.createTextNode(label));
+      return row;
+    }
+
+    function renderAll() {
+      if (!draft) return;
+      if (!draft.encoders) draft.encoders = {};
+      if (!draft.buttons) draft.buttons = {};
+      renderEncoders();
+      renderJoystick();
+      renderMatrix();
+      renderEditor();
+    }
+
+    document.getElementById('save-btn').addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN || !draft) return;
+      normalizeLayerHoldButtons();
+      enforceJoystickSafeMapping();
+      ws.send(JSON.stringify({ t: 'set_config', config: draft }));
+      setStatus('Saving…');
+    });
+
+    document.getElementById('cancel-btn').addEventListener('click', () => {
+      if (!config) return;
+      draft = clone(config);
+      renderAll();
+      setStatus('Local changes reverted');
+    });
+
+    document.getElementById('reload-btn').addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({ t: 'get_config' }));
+      setStatus('Reloading…');
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      if (!confirm('Reset to defaults?')) return;
+      ws.send(JSON.stringify({ t: 'reset_config' }));
+      setStatus('Reset requested…');
+    });
+
+    // Render UI immediately with default config
+    selected = { kind: 'encoder', id: 'E2' };
+    renderAll();
+
+    connect();
+  </script>
+</body>
+</html>
