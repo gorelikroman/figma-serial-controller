@@ -15,11 +15,12 @@ Python-агент обрабатывает их (акселерация энко
 1. Открой репозиторий в браузере: `https://github.com/gorelikroman/figma-serial-controller`
 2. Нажми **Code → Download ZIP**
 3. Распакуй ZIP в удобную папку
-4. Установи один раз:
-    - **Figma Desktop**
-    - **Python 3** (с `python.org`)
-5. В распакованной папке дважды кликни `install_requirements.command` (установит Python-зависимости)
-6. Дважды кликни `start_agent.command` (запустит агент)
+4. Один раз на этом Mac установи системные программы:
+    - **Figma Desktop** (само приложение Figma)
+    - **Python 3** (сам интерпретатор, скачать с `python.org`)
+5. В распакованной папке дважды кликни `install_requirements.command`.
+   Это уже установка библиотек проекта (`pyserial`, `websockets`) в установленный Python.
+6. Дважды кликни `start_agent.command` (запустит агент через Python)
 7. В Figma Desktop: **Plugins → Development → Import plugin from manifest...**
 8. Выбери `figma_serial_controller/plugin/manifest.json`
 9. Запусти плагин: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
