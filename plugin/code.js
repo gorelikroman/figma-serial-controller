@@ -320,6 +320,9 @@ function handleEncoderAction(action, delta) {
       break;
     case 'width':
       // delta already includes step & acceleration from agent
+      {
+      let changed = 0;
+      const values = [];
       for (const n of sel) {
         try {
           if (typeof n.resizeWithoutConstraints === 'function') {
@@ -328,11 +331,21 @@ function handleEncoderAction(action, delta) {
             }
             const next = Math.max(1, Math.round(n.width + delta));
             n.resizeWithoutConstraints(next, n.height);
+            values.push(next);
+            changed++;
           }
         } catch(_) {}
       }
+      if (changed) {
+        const unique = Array.from(new Set(values));
+        showToast(unique.length === 1 ? `Width ${unique[0]}` : `Width mixed (${changed})`);
+      }
+      }
       break;
     case 'height':
+      {
+      let changed = 0;
+      const values = [];
       for (const n of sel) {
         try {
           if (typeof n.resizeWithoutConstraints === 'function') {
@@ -341,8 +354,15 @@ function handleEncoderAction(action, delta) {
             }
             const next = Math.max(1, Math.round(n.height + delta));
             n.resizeWithoutConstraints(n.width, next);
+            values.push(next);
+            changed++;
           }
         } catch(_) {}
+      }
+      if (changed) {
+        const unique = Array.from(new Set(values));
+        showToast(unique.length === 1 ? `Height ${unique[0]}` : `Height mixed (${changed})`);
+      }
       }
       break;
     case 'fontSize':
@@ -458,6 +478,8 @@ async function handleCommand(command) {
 // ═══════════════════════════════════════════════════════════════
 
 async function handleFontSizeDelta(nodes, delta) {
+  let changed = 0;
+  const values = [];
   for (const n of nodes) {
     if (n.type !== 'TEXT') continue;
     try {
@@ -466,8 +488,14 @@ async function handleFontSizeDelta(nodes, delta) {
       const current = n.fontSize;
       if (typeof current === 'number') {
         n.fontSize = Math.max(1, current + delta);
+        values.push(n.fontSize);
+        changed++;
       }
     } catch(_) {}
+  }
+  if (changed) {
+    const unique = Array.from(new Set(values.map(v => Math.round(v * 10) / 10)));
+    showToast(unique.length === 1 ? `Font ${unique[0]}` : `Font mixed (${changed})`);
   }
 }
 
@@ -630,26 +658,42 @@ function adjustOpacityOnSelection(direction) {
   const step = 0.05 * direction;
   const sel = figma.currentPage.selection;
   if (!sel.length) return;
+  let changed = 0;
+  const values = [];
   for (const n of sel) {
     try {
       if ('opacity' in n && typeof n.opacity === 'number') {
         n.opacity = Math.min(1, Math.max(0, Math.round((n.opacity + step) * 100) / 100));
+        values.push(n.opacity);
+        changed++;
       }
     } catch (_) {}
+  }
+  if (changed) {
+    const unique = Array.from(new Set(values.map(v => Math.round(v * 100))));
+    showToast(unique.length === 1 ? `Opacity ${unique[0]}%` : `Opacity mixed (${changed})`);
   }
 }
 
 function adjustCornerRadiusOnSelection(direction) {
   const sel = figma.currentPage.selection;
   if (!sel.length) return;
+  let changed = 0;
+  const values = [];
   for (const n of sel) {
     try {
       if ('cornerRadius' in n) {
         const curr = typeof n.cornerRadius === 'number' ? n.cornerRadius : 0;
         const base = curr <= 10 ? 1 : 2;
         n.cornerRadius = Math.max(0, Math.round(curr + base * direction));
+        values.push(n.cornerRadius);
+        changed++;
       }
     } catch (_) {}
+  }
+  if (changed) {
+    const unique = Array.from(new Set(values));
+    showToast(unique.length === 1 ? `Corner ${unique[0]}` : `Corner mixed (${changed})`);
   }
 }
 
@@ -658,10 +702,15 @@ function adjustStrokeWidthOnSelection(delta) {
   const sel = figma.currentPage.selection;
   if (!sel.length) return;
 
+  let changed = 0;
+  const values = [];
+
   for (const n of sel) {
     try {
       if ('strokeWeight' in n && typeof n.strokeWeight === 'number') {
         n.strokeWeight = Math.max(0, Math.round((n.strokeWeight + delta) * 10) / 10);
+        values.push(n.strokeWeight);
+        changed++;
         continue;
       }
 
@@ -670,9 +719,16 @@ function adjustStrokeWidthOnSelection(delta) {
       for (const key of sideKeys) {
         if (key in n && typeof n[key] === 'number') {
           n[key] = Math.max(0, Math.round((n[key] + delta) * 10) / 10);
+          values.push(n[key]);
+          changed++;
         }
       }
     } catch (_) {}
+  }
+
+  if (changed) {
+    const unique = Array.from(new Set(values.map(v => Math.round(v * 10) / 10)));
+    showToast(unique.length === 1 ? `Stroke ${unique[0]}` : `Stroke mixed (${changed})`);
   }
 }
 
