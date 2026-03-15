@@ -9,6 +9,8 @@ __pycache__/
 *.so
 .venv/
 venv/
+.pytest_cache/
+.mypy_cache/
 
 # Logs
 *.log
@@ -20,3 +22,14 @@ venv/
 # OS/temp files
 *.tmp
 *.swp
+
+# Arduino build artifacts
+build/
+*.elf
+*.hex
+*.bin
+*.map
+*.eep
+
+# Frontend tooling
+node_modules/

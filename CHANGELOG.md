@@ -7,6 +7,13 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 ## [Unreleased]
 
 ### Added
+- No changes yet.
+
+## [1.1.0] - 2026-03-15
+
+### Added
+- Git tracking setup for the project.
+- Improved `.gitignore` for macOS, Python, Arduino artifacts, and editor temp files.
 - GitHub release notes template at `.github/release.yml`.
 - Project changelog.
 
@@ -20,5 +27,6 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 - Figma plugin runtime (`plugin/code.js`).
 - Launch scripts and setup documentation.
 
-[Unreleased]: https://github.com/gorelikroman/figma-serial-controller/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/gorelikroman/figma-serial-controller/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/gorelikroman/figma-serial-controller/releases/tag/v1.1.0
 [0.1.0]: https://github.com/gorelikroman/figma-serial-controller/releases/tag/v0.1.0
