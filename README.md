@@ -8,8 +8,29 @@ Python-агент обрабатывает их (акселерация энко
 
 ---
 
+## Старт без терминала (контроллер уже прошит)
+
+Если контроллер уже прошит, **Arduino CLI и перепрошивка не нужны**.
+
+1. Открой репозиторий в браузере: `https://github.com/gorelikroman/figma-serial-controller`
+2. Нажми **Code → Download ZIP**
+3. Распакуй ZIP в удобную папку
+4. Установи один раз:
+    - **Figma Desktop**
+    - **Python 3** (с `python.org`)
+5. В распакованной папке дважды кликни `install_requirements.command` (установит Python-зависимости)
+6. Дважды кликни `start_agent.command` (запустит агент)
+7. В Figma Desktop: **Plugins → Development → Import plugin from manifest...**
+8. Выбери `figma_serial_controller/plugin/manifest.json`
+9. Запусти плагин: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
+
+Проверка: в окне плагина должен быть статус `Connected`.
+
+---
+
 ## Содержание
 
+- [Старт без терминала (контроллер уже прошит)](#старт-без-терминала-контроллер-уже-прошит)
 - [Архитектура](#архитектура)
 - [Железо](#железо)
 - [Структура проекта](#структура-проекта)
@@ -131,6 +152,8 @@ figma_serial_controller/
 
 ```text
 figma_serial_controller/
+├── install_requirements.command
+├── start_agent.command
 ├── figma_serial_controller.ino
 ├── index.html
 ├── agent/
