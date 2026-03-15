@@ -26,10 +26,15 @@ Python-агент обрабатывает их (акселерация энко
 
     **Вариант B (через терминал, Homebrew):**
     ```bash
-    brew install python
-    python3 --version
+    (command -v brew >/dev/null 2>&1 || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)") && ( test -x /opt/homebrew/bin/brew && eval "$(/opt/homebrew/bin/brew shellenv)" || test -x /usr/local/bin/brew && eval "$(/usr/local/bin/brew shellenv)" ) && brew install python && python3 --version
     ```
-    Если `brew` не установлен, сначала поставь Homebrew: [brew.sh](https://brew.sh/)
+    Эта команда:
+    1. ставит Homebrew (если его еще нет)
+    2. подключает `brew` в текущую сессию
+    3. ставит Python 3
+    4. показывает версию Python
+    
+    Сайт Homebrew: [brew.sh](https://brew.sh/)
 
     Если окно Terminal было открыто во время установки Python, закрой и открой его заново.
     Если Python 3 уже установлен, пропусти этот шаг.
