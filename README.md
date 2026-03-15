@@ -15,16 +15,20 @@ Python-агент обрабатывает их (акселерация энко
 1. Открой репозиторий в браузере: `https://github.com/gorelikroman/figma-serial-controller`
 2. Нажми **Code → Download ZIP**
 3. Распакуй ZIP в удобную папку
-4. Один раз на этом Mac установи системные программы:
-    - **Figma Desktop** (само приложение Figma)
-    - **Python 3** (сам интерпретатор, скачать с `python.org`)
-    Если они уже установлены, просто переходи к шагу 5.
-5. В распакованной папке дважды кликни `install_requirements.command`.
-   Это уже установка библиотек проекта (`pyserial`, `websockets`) в установленный Python.
-6. Дважды кликни `start_agent.command` (запустит агент через Python)
-7. В Figma Desktop: **Plugins → Development → Import plugin from manifest...**
-8. Выбери `figma_serial_controller/plugin/manifest.json`
-9. Запусти плагин: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
+4. Один раз на этом Mac установи **Figma Desktop** (само приложение Figma).
+5. Один раз установи **Python 3**:
+    1. Открой `https://www.python.org/downloads/macos/`
+    2. Скачай актуальный **Python 3.x**: `macOS 64-bit universal2 installer (.pkg)`
+    3. Открой скачанный `.pkg` и пройди установку (`Continue` → `Install`)
+    4. После установки открой папку `Applications/Python 3.x/` и дважды кликни `Install Certificates.command`
+    5. Если окно Terminal было открыто, закрой и открой его заново
+    Если Python 3 уже установлен, пропусти этот шаг.
+6. В распакованной папке дважды кликни `install_requirements.command`.
+    Это установка библиотек проекта (`pyserial`, `websockets`) в установленный Python.
+7. Дважды кликни `start_agent.command` (запустит агент через Python)
+8. В Figma Desktop: **Plugins → Development → Import plugin from manifest...**
+9. Выбери `figma_serial_controller/plugin/manifest.json`
+10. Запусти плагин: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
 
 Если macOS блокирует запуск `.command`: сделай **правый клик → Open** (или **Ctrl+Click → Open**) и подтверди запуск один раз.
 
