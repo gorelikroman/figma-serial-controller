@@ -24,6 +24,8 @@ Python-агент обрабатывает их (акселерация энко
 8. Выбери `figma_serial_controller/plugin/manifest.json`
 9. Запусти плагин: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
 
+Если macOS блокирует запуск `.command`: сделай **правый клик → Open** (или **Ctrl+Click → Open**) и подтверди запуск один раз.
+
 Проверка: в окне плагина должен быть статус `Connected`.
 
 ---
