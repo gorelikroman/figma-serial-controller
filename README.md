@@ -9,8 +9,9 @@
 ## Содержание
 
 **Установка:**
-- [Вариант 1 — Простой (без Python, .app)](#вариант-1--простой-без-python-app)
-- [Вариант 2 — Для разработчиков (из исходников)](#вариант-2--для-разработчиков-из-исходников)
+- [Вариант 1 — Рекомендуемый (Python + start_agent.command)](#вариант-1--рекомендуемый-python--start_agentcommand)
+- [Вариант 2 — Простой (без Python, .app)](#вариант-2--простой-без-python-app)
+- [Вариант 3 — Для разработчиков (из исходников)](#вариант-3--для-разработчиков-из-исходников)
 
 **Документация:**
 - [Архитектура](#архитектура)
@@ -23,76 +24,84 @@
 
 ---
 
-# Вариант 1 — Простой (без Python, .app)
+# Вариант 1 — Рекомендуемый (Python + start_agent.command)
 
-> Контроллер уже прошит, Python не нужен. **Три шага.**
+> Лучший вариант для установки с GitHub. Контроллер уже прошит, перепрошивка не нужна.
 
 ### Что нужно
 
 - macOS 12+
 - Arduino Micro подключён по USB
 - Figma Desktop
+- Python 3 (скачать: [python.org for macOS](https://www.python.org/downloads/macos/))
+
+> VS Code и Copilot для использования контроллера не обязательны.
 
 ### Шаг 1: Скачать проект
 
 Открой [gorelikroman/figma-serial-controller](https://github.com/gorelikroman/figma-serial-controller)
 → **Code → Download ZIP** → распакуй.
 
-### Шаг 2: Запустить агент
+### Шаг 2: Установить Python
 
-Открой **Figma Serial Agent.app** из папки проекта.
+1. Открой [python.org for macOS](https://www.python.org/downloads/macos/)
+2. Скачай **Python 3.x macOS 64-bit universal2 installer (.pkg)**
+3. Установи `.pkg` (обычный мастер установки)
+4. Если Python уже установлен, этот шаг пропусти
 
-> ⚠️ **Первый запуск:** macOS покажет предупреждение.
-> **Правый клик → Открыть → Открыть.** Нужно сделать только один раз.
->
-> Или используй `Launch Agent.command` — он снимет карантин автоматически.
+### Шаг 3: Установить зависимости агента
 
-В menubar (верхняя панель) появится иконка статуса:
-- 🟢 — Arduino + Figma подключены
-- 🟡 — агент работает, что-то не подключено
-- 🔴 — агент остановлен
+Двойной клик по `install_requirements.command` в корне проекта.
 
-Клик по иконке — меню со статусами и настройками.
+Если macOS блокирует запуск `.command`:
+- правый клик по файлу → **Open** → подтвердить запуск
 
-### Шаг 3: Установить и запустить плагин
+### Шаг 4: Запустить агент
 
-1. В **Figma Desktop** откройте любой файл
+Двойной клик по `start_agent.command`.
+
+### Шаг 5: Установить и запустить плагин
+
+1. В **Figma Desktop** открой любой файл
 2. **Plugins → Development → Import plugin from manifest…**
-3. Выберите `plugin/manifest.json` из папки проекта
-4. Запустите: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
-5. В окне плагина статус **Connected ✓**
-6. Готово! Крутите энкодеры, нажимайте кнопки 🎛
+3. Выбери `plugin/manifest.json` из папки проекта
+4. Запусти: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
+5. В окне плагина должен быть статус **Connected ✓**
 
-> Плагин устанавливается **один раз**. Перезапуск: **⌘⇧P** → *Run last plugin*
+### Что может запросить служба безопасности
 
-### Передать другу
-
-Минимальный набор файлов:
-
-```text
-figma_serial_controller/
-├── Figma Serial Agent.app.zip   ← standalone агент
-└── plugin/
-    ├── code.js                  ← Figma плагин
-    └── manifest.json
-```
-
-Другу нужно только: распаковать → открыть `.app` → импортировать плагин в Figma.
+- Доступ к USB serial-устройству (`/dev/cu.usbmodem*`)
+- Локальный WebSocket на loopback (`ws://127.0.0.1:8765`)
+- macOS permissions для Terminal/iTerm:
+    - **Privacy & Security → Accessibility**
+    - **Privacy & Security → Automation** (Terminal/iTerm → Figma)
 
 ---
 
-# Вариант 2 — Для разработчиков (из исходников)
+# Вариант 2 — Простой (без Python, .app)
+
+> Если у вас есть готовый standalone `.app`, Python ставить не нужно.
+
+1. Открой **Figma Serial Agent.app**
+2. В Figma импортируй `plugin/manifest.json`
+3. Запусти **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
+
+Если macOS блокирует `.app`: правый клик → **Open** → подтвердить запуск.
+
+---
+
+# Вариант 3 — Для разработчиков (из исходников)
 
 > Нужен Python 3 и терминал. Подходит для разработки, отладки и перепрошивки Arduino.
 
-### 2.1 Клонировать проект
+### 3.1 Клонировать проект
 
 ```bash
 git clone https://github.com/gorelikroman/figma-serial-controller.git
 cd figma-serial-controller
 ```
 
-### 2.2 Установить Python-зависимости
+### 3.2 Установить Python-зависимости
 
 ```bash
 pip3 install pyserial websockets rumps
@@ -102,7 +111,7 @@ python3 -c "import serial, websockets, rumps; print('OK')"
 
 > Если несколько версий Python: `python3 -m pip install pyserial websockets rumps`
 
-### 2.3 Запустить агент
+### 3.3 Запустить агент
 
 **Menubar-приложение (рекомендуется):**
 ```bash
@@ -117,14 +126,14 @@ cd agent && python3 agent.py
 Или двойной клик на `start_agent.command`
 (если macOS блокирует: `chmod +x start_agent.command`)
 
-### 2.4 Установить плагин в Figma
+### 3.4 Установить плагин в Figma
 
 1. **Figma Desktop** → любой файл
 2. **Plugins → Development → Import plugin from manifest…**
 3. Выбрать `plugin/manifest.json`
 4. Запустить: **Plugins → Development → Figma Serial Controller → 🎛 Serial Controller**
 
-### 2.5 Прошивка Arduino (если нужно)
+### 3.5 Прошивка Arduino (если нужно)
 
 ```bash
 # Установить Arduino CLI
@@ -142,7 +151,7 @@ arduino-cli upload --fqbn arduino:avr:micro -p /dev/cu.usbmodemXXXXX figma_seria
 > Arduino Micro имеет виртуальный COM порт — он может поменяться после заливки.
 > Просто заново сделай `arduino-cli board list`.
 
-### 2.6 Сборка standalone .app
+### 3.6 Сборка standalone .app
 
 ```bash
 ./build_app.sh
@@ -150,14 +159,14 @@ arduino-cli upload --fqbn arduino:avr:micro -p /dev/cu.usbmodemXXXXX figma_seria
 
 Результат — `Figma Serial Agent.app` (~14 МБ) с menubar-иконкой. Копируйте на любой Mac, Python не нужен.
 
-### 2.7 Автозапуск при входе в систему
+### 3.7 Автозапуск при входе в систему
 
 ```bash
 ./install_autostart.sh
 launchctl load ~/Library/LaunchAgents/com.figma.serial-controller.plist
 ```
 
-### 2.8 Ежедневный запуск
+### 3.8 Ежедневный запуск
 
 ```bash
 cd agent && python3 tray_app.py
